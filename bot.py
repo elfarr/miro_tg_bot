@@ -1,9 +1,9 @@
-import asyncio
+
 from telegram import Update
 from telegram.ext import CommandHandler, MessageHandler, filters, ApplicationBuilder, ContextTypes
-import requests
-
+import requests, re
 from config import *
+from constants import sticker_colors
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
@@ -13,14 +13,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 WAITING_FOR_TEXT = "waiting_for_text"
 async def start_comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data[WAITING_FOR_TEXT] = True
-    await update.message.reply_text('Пожалуйста, отправьте текст, который будет нв стикере')
+    await update.message.reply_text('Отправьте текст в формате <сообщение> -c <цвет стикера>]')
+
     
 async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get(WAITING_FOR_TEXT):
-        text = update.message.text
+        pattern = re.compile(r'^(.*?)\s*-c\s*(\S+)$')
+        match = pattern.match(update.message.text)
+        text = match.group(1).strip()
+        color = match.group(2).strip()
+        if color not in sticker_colors: color = 'light_yellow'
         user = update.message.from_user
         comment_text = f"Комментарий от {user.first_name} {user.last_name}: {text}"
-        # Miro API endpoint for creating a comment
+        
         url = f"https://api.miro.com/v2/boards/{MIRO_BOARD_ID}/sticky_notes"
         headers = {
             "accept": "application/json",
@@ -30,6 +35,9 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         payload = {
             "data": {
                 "content": comment_text
+            },
+            "style" : {
+                "fillColor": color
             }
     }
         response = requests.post(url, headers=headers, json=payload)
@@ -40,6 +48,7 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text('Произошла ошибка при создании стикера')
     context.user_data[WAITING_FOR_TEXT] = False
         
+
 WAITING_FOR_PHOTO = "waiting_for_photo"
 async def start_photo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик команды /photo, который запрашивает фото."""
