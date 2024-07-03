@@ -111,7 +111,7 @@ def main():
     photo_command_handler = CommandHandler("photo", start_photo_command)
     application.add_handler(photo_command_handler)
 
-    color_hangler = CommandHandler("color", start_photo_command)
+    color_hangler = CommandHandler("color", color_command)
     photo_handler = MessageHandler(filters.PHOTO, handle_photo)
     handler_comment = MessageHandler(filters.TEXT, comment_command)
     application.add_handler(color_hangler)
