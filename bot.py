@@ -22,6 +22,7 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         match = pattern.match(update.message.text)
         text = match.group(1).strip()
         color = match.group(2).strip()
+        
         if color not in sticker_colors: color = 'light_yellow'
         user = update.message.from_user
         comment_text = f"Комментарий от {user.first_name} {user.last_name}: {text}"
