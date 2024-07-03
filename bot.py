@@ -22,7 +22,7 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         match = pattern.match(update.message.text)
         text = match.group(1).strip()
         color = match.group(2).strip()
-        
+
         if color not in sticker_colors: color = 'light_yellow'
         user = update.message.from_user
         comment_text = f"Комментарий от {user.first_name} {user.last_name}: {text}"
@@ -49,6 +49,12 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text('Произошла ошибка при создании стикера')
     context.user_data[WAITING_FOR_TEXT] = False
         
+async def color_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = "Доступные цвета:\n"
+    for color in sticker_colors:
+        message += f"{color}\n"
+    await update.message.reply_text('Доступные цвета для стикеров: ')
+
 
 WAITING_FOR_PHOTO = "waiting_for_photo"
 async def start_photo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
