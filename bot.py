@@ -13,7 +13,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 WAITING_FOR_TEXT = "waiting_for_text"
 async def start_comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data[WAITING_FOR_TEXT] = True
-    await update.message.reply_text('Пожалуйста, отправьте текст, который будет не стикере')
+    await update.message.reply_text('Пожалуйста, отправьте текст, который будет нв стикере')
     
 async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get(WAITING_FOR_TEXT):
