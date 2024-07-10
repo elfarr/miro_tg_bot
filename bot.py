@@ -1,10 +1,11 @@
 
-from telegram import Update
+from telegram import Message, Update
 from telegram.ext import CommandHandler, MessageHandler, filters, ApplicationBuilder, ContextTypes
 import requests, re
+from io import BytesIO
 from config import *
 from constants import sticker_colors
-
+import random
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -15,15 +16,20 @@ async def start_comment_command(update: Update, context: ContextTypes.DEFAULT_TY
     context.user_data[WAITING_FOR_TEXT] = True
     await update.message.reply_text('Отправьте текст в формате <сообщение> -c <цвет стикера>]')
 
+
     
 async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get(WAITING_FOR_TEXT):
         pattern = re.compile(r'^(.*?)\s*-c\s*(\S+)$')
         match = pattern.match(update.message.text)
-        text = match.group(1).strip()
-        color = match.group(2).strip()
-
-        if color not in sticker_colors: color = 'light_yellow'
+        if match:
+            
+            text = match.group(1).strip()
+            color = match.group(2).strip()
+            if color not in sticker_colors: color = 'light_yellow'
+        else:
+            text =  update.message.text
+            color = 'light_yellow'
         user = update.message.from_user
         comment_text = f"Комментарий от {user.first_name} {user.last_name}: {text}"
         
@@ -33,12 +39,18 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "content-type": "application/json",
             "authorization": f"Bearer {MIRO_API_TOKEN}"
         }
+
+        
         payload = {
             "data": {
                 "content": comment_text
             },
             "style" : {
                 "fillColor": color
+            }, 
+            "position": {
+                "x": 2000+random.random()*1000,
+                "y": 2000+random.random()*1000
             }
     }
         response = requests.post(url, headers=headers, json=payload)
@@ -51,9 +63,10 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
 async def color_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Доступные цвета:\n"
+    print(sticker_colors)
     for color in sticker_colors:
-        message += f"{color}\n"
-    await update.message.reply_text('Доступные цвета для стикеров: ')
+        message += f"- {color}\n"
+    await update.message.reply_text(message)
 
 
 WAITING_FOR_PHOTO = "waiting_for_photo"
@@ -61,6 +74,7 @@ async def start_photo_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     """Обработчик команды /photo, который запрашивает фото."""
     context.user_data[WAITING_FOR_PHOTO] = True
     await update.message.reply_text('Пожалуйста, отправьте фото, чтобы я мог загрузить его на Miro.')
+
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get(WAITING_FOR_PHOTO):
@@ -70,35 +84,40 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # Проверка наличия фото
             if message.photo:
-                photo_file = await message.photo[-1].get_file()
-                photo_bytes = await photo_file.download_as_bytearray()
-                print("Фото успешно загружено")
-             
-                # Подготовка запроса к Miro API
-                url = f"https://api.miro.com/v2/boards/{MIRO_BOARD_ID}/images"
+                photo = message.photo[-1]
+                photo_file = await photo.get_file()
+                photo_bytes = BytesIO(await photo_file.download_as_bytearray())
+                miro_url = f"https://api.miro.com/v2/boards/{MIRO_BOARD_ID}/images"
+                print(miro_url)
                 headers = {
                     "accept": "application/json",
                     "authorization": f"Bearer {MIRO_API_TOKEN}"
                 }
+                data = {
+                     "position":{"x":10000,"y":1000}, 
+                     "type": 'application/json'
+                }
                 files = {
-                    "resource": ('image.jpg', photo_bytes, 'image/jpeg')
+                    'resource': ('photo.jpg', photo_bytes, 'image/jpeg')
                 }
 
                 # Отправка запроса
-                response = requests.post(url, files=files, headers=headers)
+                response = requests.post(miro_url, headers=headers, data=data, files=files)
                 print(f"Ответ от Miro API: {response.status_code}")
 
                 if response.status_code == 201:
                     await message.reply_text('Фотография успешно добавлена на доску Miro.')
-                
                 else:
                     await message.reply_text(f'Произошла ошибка при добавлении фотографии: {response.text}')
+                
                 context.user_data[WAITING_FOR_PHOTO] = False
             else:
                 await message.reply_text('Пожалуйста, отправьте фото.')
 
-        except: 
-            pass
+        except Exception as e:
+            print(f"Произошла ошибка: {e}")
+            await message.reply_text('Произошла ошибка при обработке фотографии. Пожалуйста, попробуйте еще раз.')
+
 
 def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
