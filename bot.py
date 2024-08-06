@@ -2,7 +2,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 from telegram.ext import CommandHandler, MessageHandler, filters, ApplicationBuilder, ContextTypes, CallbackQueryHandler
 import requests, re
-from config import BOARDS, MIRO_API_TOKEN, TELEGRAM_BOT_TOKEN
+from config import *
 from constants import sticker_colors
 import random
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -32,8 +32,7 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             color = 'light_yellow'
         user = update.message.from_user
         comment_text = f"Комментарий от {user.first_name} {user.last_name}: {text}"
-        id1 = BOARDS[0]["id"]
-        url = f"https://api.miro.com/v2/boards/{id1}/sticky_notes"
+        url = f"https://api.miro.com/v2/boards/{BOARDS[0]["id"]}/sticky_notes"
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
