@@ -2,7 +2,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 from telegram.ext import CommandHandler, MessageHandler, filters, ApplicationBuilder, ContextTypes, CallbackQueryHandler
 import requests, re
-from config import *
+from config import BOARDS, MIRO_API_TOKEN, TELEGRAM_BOT_TOKEN
 from constants import sticker_colors
 import random
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
