@@ -32,8 +32,8 @@ async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             color = 'light_yellow'
         user = update.message.from_user
         comment_text = f"Комментарий от {user.first_name} {user.last_name}: {text}"
-        
-        url = f"https://api.miro.com/v2/boards/{BOARDS[0]["id"]}/sticky_notes"
+        id1 = BOARDS[0]["id"]
+        url = f"https://api.miro.com/v2/boards/{id1}/sticky_notes"
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
