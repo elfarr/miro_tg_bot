@@ -11,6 +11,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id=update.effective_chat.id,
         text="I'm a bot, please talk to me!"
     )
+    
 WAITING_FOR_TEXT = "waiting_for_text"
 async def start_comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data[WAITING_FOR_TEXT] = True
@@ -86,23 +87,26 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if message.photo:
                 photo = message.photo[-1]
                 photo_file = await photo.get_file()
-                photo_bytes = BytesIO(await photo_file.download_as_bytearray())
+                file_url = photo_file.file_path
+         
                 miro_url = f"https://api.miro.com/v2/boards/{MIRO_BOARD_ID}/images"
-                print(miro_url)
                 headers = {
                     "accept": "application/json",
                     "authorization": f"Bearer {MIRO_API_TOKEN}"
                 }
-                data = {
-                     "position":{"x":10000,"y":1000}, 
-                     "type": 'application/json'
-                }
-                files = {
-                    'resource': ('photo.jpg', photo_bytes, 'image/jpeg')
-                }
 
-                # Отправка запроса
-                response = requests.post(miro_url, headers=headers, data=data, files=files)
+                data = {
+            "data": {
+                "title": "Sample image title",
+                "url": file_url
+            },
+            "position": {
+                 "x": 2000+random.random()*1000,
+                "y": 2000+random.random()*1000
+            }
+        }
+                
+                response = requests.post(miro_url, headers=headers, json=data)
                 print(f"Ответ от Miro API: {response.status_code}")
 
                 if response.status_code == 201:
