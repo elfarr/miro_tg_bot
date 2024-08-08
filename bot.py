@@ -1,4 +1,5 @@
 
+import json
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 from telegram.ext import CommandHandler, MessageHandler, filters, ApplicationBuilder, ContextTypes, CallbackQueryHandler
 import requests, re
@@ -18,6 +19,31 @@ async def start_comment_command(update: Update, context: ContextTypes.DEFAULT_TY
     context.user_data[WAITING_FOR_TEXT] = True
     await update.message.reply_text('Отправьте текст в формате <сообщение> -c <цвет стикера>')
 
+async def action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    url = "https://randomall.ru/api/gens/3441"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = {}
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code == 200:
+        result = response.json()
+        await update.message.reply_text(result['msg'])
+    else:
+        print(f"Error: {response.status_code}, {response.text}")
+
+async def facts(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    url = "https://randomall.ru/api/gens/3674"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = {}
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code == 200:
+        result = response.json()
+        await update.message.reply_text(result['msg'])
+    else:
+        print(f"Error: {response.status_code}, {response.text}")
 
 async def comment_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get(WAITING_FOR_TEXT) and update.message.text[0] != '/':
@@ -139,11 +165,14 @@ def main():
     
     start_handler = CommandHandler('start', start)
     cancel_handler = CommandHandler('cancel', cancel)
-
+    action_handler = CommandHandler('action', action)
+    facts_handler = CommandHandler('facts', facts)
     comment_handler = CommandHandler('comment', start_comment_command)
     application.add_handler(start_handler)
     application.add_handler(cancel_handler)
     application.add_handler( comment_handler)
+    application.add_handler(action_handler)
+    application.add_handler(facts_handler)
 
 
 
